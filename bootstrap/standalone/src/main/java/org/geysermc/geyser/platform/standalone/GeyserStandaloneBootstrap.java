@@ -85,6 +85,7 @@ public class GeyserStandaloneBootstrap implements GeyserBootstrap {
         // Set defaults
         boolean useGuiOpts = bootstrap.useGui;
         String configFilenameOpt = bootstrap.configFilename;
+        boolean horizonLan = false;
 
         GeyserLocale.init(bootstrap);
 
@@ -96,6 +97,7 @@ public class GeyserStandaloneBootstrap implements GeyserBootstrap {
             switch (arg) {
                 case "--gui", "gui" -> useGuiOpts = true;
                 case "--nogui", "nogui" -> useGuiOpts = false;
+                case "--horizon-lan" -> horizonLan = true;
                 case "--config", "-c" -> {
                     if (i >= args.length - 1) {
                         System.err.println(MessageFormat.format(GeyserLocale.getLocaleStringLog("geyser.bootstrap.args.config_not_specified"), "-c"));
@@ -108,6 +110,7 @@ public class GeyserStandaloneBootstrap implements GeyserBootstrap {
                 case "--help", "-h" -> {
                     System.out.println(MessageFormat.format(GeyserLocale.getLocaleStringLog("geyser.bootstrap.args.usage"), "[java -jar] Geyser.jar [opts]"));
                     System.out.println("  " + GeyserLocale.getLocaleStringLog("geyser.bootstrap.args.options"));
+                    System.out.println("    --horizon-lan          Wait for a Horizon Open to LAN announcement and connect to that world");
                     System.out.println("    -c, --config [file]    " + GeyserLocale.getLocaleStringLog("geyser.bootstrap.args.config"));
                     System.out.println("    -h, --help             " + GeyserLocale.getLocaleStringLog("geyser.bootstrap.args.help"));
                     System.out.println("    --gui, --nogui         " + GeyserLocale.getLocaleStringLog("geyser.bootstrap.args.gui"));
@@ -128,6 +131,19 @@ public class GeyserStandaloneBootstrap implements GeyserBootstrap {
                 }
             }
         }
+        if (horizonLan) {
+            try {
+                HorizonLanDiscovery.Target target = HorizonLanDiscovery.await();
+                argsConfigKeys.put(NodePath.of("java", "address"), target.address());
+                argsConfigKeys.put(NodePath.of("java", "port"), Integer.toString(target.port()));
+                System.out.println("Horizon LAN world found at " + target.address() + ":" + target.port()
+                    + " (" + target.motd() + ")");
+            } catch (Exception e) {
+                System.err.println("Could not discover a Horizon LAN world: " + e.getMessage());
+                return;
+            }
+        }
+
         bootstrap.useGui = useGuiOpts;
         bootstrap.configFilename = configFilenameOpt;
         bootstrap.onGeyserInitialize();
