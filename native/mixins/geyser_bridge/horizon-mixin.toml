@@ -1,0 +1,20 @@
+[mod]
+id = "geyser_bridge"
+version = "0.1.0"
+priority = 100
+
+[compatibility]
+horizon_revision = "c076902dd5530a0c947107bed7244e59387f81f9"
+
+[[module]]
+id = "runtime"
+file = "crates/horizon-client/src/game.rs"
+name = "geyser_bridge"
+source = "runtime.rs"
+
+[[injection]]
+id = "server-start"
+kind = "HEAD"
+target = "horizon_client::game::Game<'_>::native_server_about_to_start"
+helper = "server_start.rs"
+bindings = [{ name = "dedicated", ty = "bool", value = "dedicated" }]
