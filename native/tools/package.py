@@ -28,7 +28,8 @@ def main():
     for path in sorted(bundle.iterdir()):
         if path.is_file() and path.suffix in (".rs", ".toml"):
             files[path.relative_to(ROOT).as_posix()] = path.read_bytes()
-    output = ROOT / "dist" / f"{mod["id"]}-{mod["version"]}.hnmod"
+    output_name = "{}-{}.hnmod".format(mod["id"], mod["version"])
+    output = ROOT / "dist" / output_name
     output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED) as archive:
         for name, data in sorted(files.items()):
