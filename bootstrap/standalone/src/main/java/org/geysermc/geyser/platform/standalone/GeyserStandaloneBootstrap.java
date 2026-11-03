@@ -134,8 +134,8 @@ public class GeyserStandaloneBootstrap implements GeyserBootstrap {
         if (horizonLan) {
             try {
                 HorizonLanDiscovery.Target target = HorizonLanDiscovery.await();
-                argsConfigKeys.put(NodePath.of("java", "address"), target.address());
-                argsConfigKeys.put(NodePath.of("java", "port"), Integer.toString(target.port()));
+                argsConfigKeys.put(NodePath.of(new String[] {"java", "address"}), target.address());
+                argsConfigKeys.put(NodePath.of(new String[] {"java", "port"}), Integer.toString(target.port()));
                 System.out.println("Horizon LAN world found at " + target.address() + ":" + target.port()
                     + " (" + target.motd() + ")");
             } catch (Exception e) {
