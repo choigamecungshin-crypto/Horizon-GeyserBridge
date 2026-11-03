@@ -56,38 +56,47 @@ you're interested in helping out with Geyser.
 - [Simple Logging Facade for Java (slf4j)](https://github.com/qos-ch/slf4j)
 
 
-## Horizon Open-to-LAN bridge
+## Horizon integration status
 
-This fork includes a standalone discovery mode for Horizon's integrated server.
-It listens for Horizon's vanilla-compatible Java LAN announcement on
+**This repository does not yet produce a Horizon mod.** The current CI artifact is a
+Java Geyser Standalone JAR, which must run as a separate process. It is a
+network-bridge prototype, not an installable Horizon mod.
+
+Horizon uses two different mod formats:
+
+- `.hmod`: content/assets only; it cannot run Geyser.
+- `.hnmod`: native Rust code bundled with `horizon-mixin.toml` and
+  `horizon-native.json`. The Horizon launcher builds that source into a game
+  instance. Renaming a JAR or putting a JAR inside this ZIP does not make it a
+  valid `.hnmod`.
+
+Geyser's current implementation is Java and depends on its Java protocol stack
+and Cloudburst's Bedrock/RakNet libraries. A real `.hnmod` therefore requires
+a Rust-native port or a separately supported IPC/proxy architecture; the
+existing JAR cannot be embedded directly into Horizon's native mod loader.
+
+### Existing standalone prototype
+
+The current branch adds a standalone discovery mode for Horizon's integrated
+server. It listens for the vanilla-compatible Java LAN announcement on
 `224.0.2.60:4445/UDP`, reads the announced TCP port, and configures Geyser's
-existing Java remote endpoint before Geyser starts. The port is discovered from
-the announcement; it is not assumed to be `25565` and no port scan is used.
+Java remote endpoint before Geyser starts.
 
-1. Build the standalone artifact with the normal Geyser build:
-   `./gradlew :standalone:shadowJar`.
-2. Start the resulting standalone JAR on the same LAN as the Horizon host:
+1. Build with `./gradlew :standalone:shadowJar`.
+2. Start the separate process on the same LAN:
    `java -jar Geyser-Standalone.jar --nogui --horizon-lan`.
 3. Open the single-player world in Horizon and choose **Open to LAN**.
-4. Connect Bedrock clients to the machine running Geyser on the configured
-   Bedrock UDP port (default `19132`).
+4. Connect Bedrock clients to the Geyser host's Bedrock UDP port (default
+   `19132`).
 
-The discovery option waits until a Horizon world is published, then starts
-Geyser against that exact host address and announced TCP port. Keep Geyser on
-the same local network as Horizon; multicast discovery is not routed across
-subnets by default.
+This is only a prototype. The target is captured once at startup; reopening
+LAN on a new port requires restarting Geyser. Authentication compatibility
+depends on the Horizon world's mode and Geyser's remote configuration.
+End-to-end Bedrock gameplay has not been validated.
 
-### Current integration boundary
+### Required work for a real .hnmod
 
-This mode reuses Geyser's existing Bedrock/RakNet listener, Java protocol
-translation, and configured authentication. It does not patch Horizon or
-change Horizon's host authentication policy. Set Geyser's `remote` Java
-authentication mode appropriately for the Horizon host (online-mode worlds
-require valid Java authentication; an offline-name host requires an offline
-Geyser setup). Floodgate does not turn a Bedrock XUID into a Mojang Java
-account.
-
-The selected target is captured when Geyser starts. If the host closes and
-reopens LAN on a different port, restart Geyser with `--horizon-lan` to
-rediscover it. Automatic live retargeting, in-process Horizon integration,
-and end-to-end gameplay validation remain outstanding.
+See [the native-port plan](docs/HORIZON_NATIVE_PORT.md). Until the Bedrock
+protocol translation and Horizon-side integration exist in Rust, this project
+must not label its JAR as a Horizon mod or claim that a Bedrock player can join
+through an installed `.hnmod`.
