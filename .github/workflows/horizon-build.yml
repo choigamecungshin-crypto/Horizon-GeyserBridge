@@ -40,3 +40,42 @@ jobs:
           path: bootstrap/standalone/build/libs/Geyser-Standalone.jar
           if-no-files-found: error
           retention-days: 14
+
+  package-native-prototype:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate and package native .hnmod source bundle
+        run: |
+          python -m py_compile native/tools/package.py
+          python native/tools/package.py
+          python - <<'PY'
+          import json, zipfile
+          from pathlib import Path
+          bundle = Path('native/dist/geyser_bridge-0.1.0.hnmod')
+          with zipfile.ZipFile(bundle) as z:
+              names = set(z.namelist())
+              required = {'horizon-native.json', 'mixins/geyser_bridge/horizon-mixin.toml', 'mixins/geyser_bridge/server_start.rs', 'mixins/geyser_bridge/runtime.rs'}
+              missing = required - names
+              if missing:
+                  raise SystemExit(f'missing bundle entries: {sorted(missing)}')
+              manifest = json.loads(z.read('horizon-native.json'))
+              assert manifest['id'] == 'geyser_bridge'
+              assert manifest['schema'] == 1
+          print(f'Validated source bundle: {bundle} ({bundle.stat().st_size} bytes)')
+          PY
+
+      - name: Upload native .hnmod source bundle (not yet runtime-complete)
+        uses: actions/upload-artifact@v4
+        with:
+          name: Horizon-GeyserBridge-Native-Prototype
+          path: native/dist/geyser_bridge-0.1.0.hnmod
+          if-no-files-found: error
+          retention-days: 14
