@@ -8,8 +8,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
-import java.net.SocketAddress;
-import java.net.SocketTimeoutException;
+import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -43,8 +42,9 @@ final class HorizonLanDiscovery {
 
     static Target await() throws IOException {
         System.out.println("Waiting for Horizon: open the world menu and select Open to LAN...");
-        try (MulticastSocket socket = new MulticastSocket(DISCOVERY_PORT)) {
+        try (MulticastSocket socket = new MulticastSocket(null)) {
             socket.setReuseAddress(true);
+            socket.bind(new InetSocketAddress(DISCOVERY_PORT));
             socket.joinGroup(GROUP);
             byte[] buffer = new byte[2048];
             while (!Thread.currentThread().isInterrupted()) {
@@ -73,8 +73,6 @@ final class HorizonLanDiscovery {
                 }
                 return new Target(sender.getHostAddress(), port, matcher.group(1));
             }
-        } catch (SocketTimeoutException ignored) {
-            // Reserved for a future configurable timeout; discovery currently waits.
         }
         throw new IOException("discovery stopped before a Horizon world was found");
     }
