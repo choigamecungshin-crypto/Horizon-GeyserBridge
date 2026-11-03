@@ -54,3 +54,40 @@ you're interested in helping out with Geyser.
 - [GeyserMC's Java Protocol Library](https://github.com/GeyserMC/MCProtocolLib)
 - [TerminalConsoleAppender](https://github.com/Minecrell/TerminalConsoleAppender)
 - [Simple Logging Facade for Java (slf4j)](https://github.com/qos-ch/slf4j)
+
+
+## Horizon Open-to-LAN bridge
+
+This fork includes a standalone discovery mode for Horizon's integrated server.
+It listens for Horizon's vanilla-compatible Java LAN announcement on
+`224.0.2.60:4445/UDP`, reads the announced TCP port, and configures Geyser's
+existing Java remote endpoint before Geyser starts. The port is discovered from
+the announcement; it is not assumed to be `25565` and no port scan is used.
+
+1. Build the standalone artifact with the normal Geyser build:
+   `./gradlew :standalone:shadowJar`.
+2. Start the resulting standalone JAR on the same LAN as the Horizon host:
+   `java -jar Geyser-Standalone.jar --nogui --horizon-lan`.
+3. Open the single-player world in Horizon and choose **Open to LAN**.
+4. Connect Bedrock clients to the machine running Geyser on the configured
+   Bedrock UDP port (default `19132`).
+
+The discovery option waits until a Horizon world is published, then starts
+Geyser against that exact host address and announced TCP port. Keep Geyser on
+the same local network as Horizon; multicast discovery is not routed across
+subnets by default.
+
+### Current integration boundary
+
+This mode reuses Geyser's existing Bedrock/RakNet listener, Java protocol
+translation, and configured authentication. It does not patch Horizon or
+change Horizon's host authentication policy. Set Geyser's `remote` Java
+authentication mode appropriately for the Horizon host (online-mode worlds
+require valid Java authentication; an offline-name host requires an offline
+Geyser setup). Floodgate does not turn a Bedrock XUID into a Mojang Java
+account.
+
+The selected target is captured when Geyser starts. If the host closes and
+reopens LAN on a different port, restart Geyser with `--horizon-lan` to
+rediscover it. Automatic live retargeting, in-process Horizon integration,
+and end-to-end gameplay validation remain outstanding.
