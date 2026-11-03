@@ -33,10 +33,10 @@ jobs:
       - name: Build standalone Geyser
         run: ./gradlew --no-daemon :standalone:shadowJar
 
-      - name: Upload standalone JAR
+      - name: Upload standalone JAR (prototype only)
         uses: actions/upload-artifact@v4
         with:
-          name: Horizon-GeyserBridge-Standalone
+          name: Horizon-GeyserBridge-Standalone-Prototype
           path: bootstrap/standalone/build/libs/Geyser-Standalone.jar
           if-no-files-found: error
           retention-days: 14
